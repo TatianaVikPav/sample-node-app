@@ -3,26 +3,40 @@ pipeline {
 
     environment {
         IMAGE_NAME = "sample-node-app:latest"
+        GIT_REPO = "https://github.com/TatianaVikPav/sample-node-app.git"
+        GIT_BRANCH = "main"
     }
 
     stages {
         stage('Checkout Code') {
             steps {
-                git url: 'https://github.com/TatianaVikPav/sample-node-app.git', branch: 'main'
+                // ещё раз явно чекаутим репо
+                git url: "${GIT_REPO}", branch: "${GIT_BRANCH}"
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t sample-node-app:latest .'
+                // ВАЖНО: на Windows используем bat, а не sh
+                bat 'docker build -t sample-node-app:latest .'
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
-                sh 'kubectl apply -f k8s-deployment.yaml'
-                sh 'kubectl apply -f k8s-service.yaml'
+                // Тоже bat
+                bat 'kubectl apply -f k8s-deployment.yaml'
+                bat 'kubectl apply -f k8s-service.yaml'
             }
+        }
+    }
+
+    post {
+        success {
+            echo 'Pipeline completed successfully ✅'
+        }
+        failure {
+            echo 'Pipeline failed ❌'
         }
     }
 }
